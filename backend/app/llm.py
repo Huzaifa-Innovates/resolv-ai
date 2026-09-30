@@ -1,6 +1,12 @@
 import requests
 
-from .config import MODEL_NAME, OLLAMA_URL, REQUEST_TIMEOUT, SYSTEM_PROMPT
+from .config import (
+    MAX_HISTORY_MESSAGES,
+    MODEL_NAME,
+    OLLAMA_URL,
+    REQUEST_TIMEOUT,
+    SYSTEM_PROMPT,
+)
 
 
 class LLMError(Exception):
@@ -12,14 +18,21 @@ class LLMError(Exception):
         self.status_code = status_code
 
 
-def ask_llm(user_message: str) -> str:
-    """Send a message to Llama 3.2 via Ollama and return the reply text."""
+def ask_llm(user_message: str, history: list | None = None) -> str:
+    """Send the conversation to Llama 3.2 via Ollama and return the reply text."""
+    history = history or []
+
+    # Keep only the most recent messages so the prompt stays small and fast
+    recent = history[-MAX_HISTORY_MESSAGES:]
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for item in recent:
+        messages.append({"role": item.role, "content": item.content})
+    messages.append({"role": "user", "content": user_message})
+
     payload = {
         "model": MODEL_NAME,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_message},
-        ],
+        "messages": messages,
         "stream": False,  # wait for the full answer instead of streaming it
     }
 

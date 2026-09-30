@@ -23,13 +23,21 @@ function App() {
     const text = input.trim();
     if (!text || loading) return;
 
+    // Build the history from earlier messages (skip the welcome message)
+    const history = messages
+      .filter((m) => m !== WELCOME_MESSAGE)
+      .map((m) => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.text,
+      }));
+
     setMessages((prev) => [...prev, { role: "user", text }]);
     setInput("");
     setError("");
     setLoading(true);
 
     try {
-      const reply = await sendMessage(text);
+      const reply = await sendMessage(text, history);
       setMessages((prev) => [...prev, { role: "ai", text: reply }]);
     } catch (err) {
       setError(err.message);

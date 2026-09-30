@@ -3,6 +3,7 @@
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME = "llama3.2"
 REQUEST_TIMEOUT = 120  # seconds; the first request can be slow while the model loads
+MAX_HISTORY_MESSAGES = 10  # how many earlier messages to send to the LLM
 
 SYSTEM_PROMPT = """You are Resolv.ai, the friendly customer support assistant for Resolven Technologies, a fictional IT services company.
 

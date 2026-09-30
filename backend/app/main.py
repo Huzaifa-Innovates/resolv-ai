@@ -29,7 +29,7 @@ def chat(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
     try:
-        answer = ask_llm(message)
+        answer = ask_llm(message, request.history)
     except LLMError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
