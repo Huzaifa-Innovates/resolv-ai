@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { sendMessage } from "./api";
 import "./App.css";
 
@@ -69,9 +70,14 @@ function App() {
               <p>Resolven Technologies · Customer Support</p>
             </div>
           </div>
-          <button className="clear-btn" onClick={handleClear}>
-            Clear chat
-          </button>
+          <div className="header-actions">
+            <Link to="/about" className="clear-btn nav-link">
+              About us
+            </Link>
+            <button className="clear-btn" onClick={handleClear}>
+              Clear chat
+            </button>
+          </div>
         </header>
 
         <main className="messages">
