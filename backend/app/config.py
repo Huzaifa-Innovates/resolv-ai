@@ -1,9 +1,36 @@
 # Central place for settings. Change things here, not deep in the code.
+import json
+import os
+from pathlib import Path
 
-OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2"
-REQUEST_TIMEOUT = 120  # seconds; the first request can be slow while the model loads
+# ---- Ollama connection ----
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_URL = f"{OLLAMA_HOST}/api/chat"
+OLLAMA_GENERATE_URL = f"{OLLAMA_HOST}/api/generate"
+REQUEST_TIMEOUT = 120  # seconds per model attempt
 MAX_HISTORY_MESSAGES = 10  # how many earlier messages to send to the LLM
+
+# ---- Model settings live in backend/models.json ----
+MODELS_FILE = Path(__file__).resolve().parent.parent / "models.json"
+
+DEFAULT_MODEL_SETTINGS = {
+    "default_model": "llama3.2",
+    "fast_model": None,
+    "fallback_models": [],
+    "use_fast_model_for_short_messages": False,
+    "short_message_max_chars": 20,
+    "keep_alive": "30m",
+}
+
+
+def load_model_settings() -> dict:
+    """Read models.json on every call, so edits apply without a restart."""
+    try:
+        with open(MODELS_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        data = {}  # missing or invalid file: use safe defaults
+    return {**DEFAULT_MODEL_SETTINGS, **data}
 
 SYSTEM_PROMPT = """You are Resolv.ai, the friendly customer support assistant for Resolven Technologies, a fictional IT services company.
 
