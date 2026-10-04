@@ -7,9 +7,8 @@ from .config import (
     OLLAMA_GENERATE_URL,
     OLLAMA_URL,
     REQUEST_TIMEOUT,
-    SYSTEM_PROMPT,
-    load_model_settings,
 )
+from .settings_store import SettingsError, get_model_config, get_system_prompt
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -41,7 +40,12 @@ def pick_models(user_message: str, settings: dict) -> list[str]:
 
 def preload_models() -> None:
     """Load the main models into memory at startup so the first reply is fast."""
-    settings = load_model_settings()
+    try:
+        settings = get_model_config()
+    except SettingsError as e:
+        logger.warning("Could not preload models: %s", e)
+        return
+
     names = [settings["default_model"]]
     if settings["use_fast_model_for_short_messages"] and settings.get("fast_model"):
         names.append(settings["fast_model"])
@@ -92,11 +96,16 @@ def _call_ollama(model: str, messages: list, keep_alive: str) -> str:
 
 def ask_llm(user_message: str, history: list | None = None) -> str:
     """Pick a model automatically, call it, and fall back if it fails."""
-    settings = load_model_settings()
+    try:
+        settings = get_model_config()
+        system_prompt = get_system_prompt()
+    except SettingsError as e:
+        raise LLMError(str(e), 503)
+
     history = history or []
     recent = history[-MAX_HISTORY_MESSAGES:]
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": system_prompt}]
     for item in recent:
         messages.append({"role": item.role, "content": item.content})
     messages.append({"role": "user", "content": user_message})
