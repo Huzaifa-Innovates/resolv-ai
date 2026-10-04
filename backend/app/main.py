@@ -1,10 +1,21 @@
+import threading
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .llm import LLMError, ask_llm
+from .llm import LLMError, ask_llm, preload_models
 from .schemas import ChatRequest, ChatResponse
 
-app = FastAPI(title="Resolv.ai Backend")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Warm up models in the background so startup is not blocked
+    threading.Thread(target=preload_models, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Resolv.ai Backend", lifespan=lifespan)
 
 # Allow the React dev server to call this API from the browser.
 app.add_middleware(
